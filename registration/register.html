@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Регистрация покупателя</title>
+    <link rel="stylesheet" href="../login/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <form id="registerForm" class="form">
+        <h2>Регистрация покупателя</h2>
+
+        <label for="fullName">ФИО</label>
+        <input type="text" id="fullName" required />
+
+        <label for="email">Email</label>
+        <input type="email" id="email" required />
+
+        <label for="phone">Номер телефона</label>
+        <input
+          type="tel"
+          id="phone"
+          pattern="^\+?\d{10,15}$"
+          placeholder="+7XXXXXXXXXX"
+          required
+        />
+
+        <label for="password">Пароль</label>
+        <input type="password" id="password" required />
+
+        <button type="submit">Зарегистрироваться</button>
+
+        <p class="register-link">
+          Уже есть аккаунт? <a href="../login/login.html">Войти</a>
+        </p>
+      </form>
+    </div>
+
+    <script src="register.js"></script>
+  </body>
+</html>

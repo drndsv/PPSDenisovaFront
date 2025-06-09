@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Оформление заказа</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Оформление заказа</h2>
+
+      <div id="orderItems" class="cart-items"></div>
+
+      <form id="checkoutForm" class="form">
+        <label for="recipient">Получатель</label>
+        <input type="text" id="recipient" required />
+
+        <label for="address">Адрес доставки</label>
+        <input type="text" id="address" required />
+
+        <button type="submit">Оплатить</button>
+      </form>
+    </div>
+
+    <script src="checkout.js"></script>
+  </body>
+</html>
