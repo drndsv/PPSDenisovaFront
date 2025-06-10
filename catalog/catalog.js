@@ -30,3 +30,23 @@ function addToCart(productId) {
 function goToCart() {
   window.location.href = "../catalog/cart/cart.html";
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  const greetingEl = document.getElementById("userGreeting");
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  if (!user || user.role !== "customer") {
+    window.location.href = "../../login/login.html";
+    return;
+  }
+
+  greetingEl.textContent = `Здравствуйте, ${user.fullName || "пользователь"}!`;
+
+  // здесь же можешь отрисовывать товары
+});
+
+// Выход
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "../../login/login.html";
+}

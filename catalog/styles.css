@@ -2,9 +2,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
   background-color: #0077cc;
   color: white;
+  padding: 15px 30px;
+  border-bottom: 2px solid #005fa3;
 }
 
 .product-list {
@@ -45,4 +46,33 @@
 
 .product-card button:hover {
   background-color: #005fa3;
+}
+
+.catalog-header h1 {
+  margin: 0;
+}
+
+.catalog-nav {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.catalog-nav a {
+  color: white;
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+.catalog-nav button {
+  padding: 6px 12px;
+  background-color: #ff4d4d;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+}
+
+.catalog-nav button:hover {
+  background-color: #d11a2a;
 }

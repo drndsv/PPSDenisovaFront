@@ -8,15 +8,29 @@ document
     const phone = document.getElementById("phone").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    // Заглушка — позже здесь будет отправка данных на бэкенд
-    console.log("Регистрация покупателя:", {
+    // Получаем текущий список пользователей или создаём новый
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    // Проверка на уникальность email
+    const existingUser = users.find((u) => u.email === email);
+    if (existingUser) {
+      alert("Пользователь с таким email уже зарегистрирован");
+      return;
+    }
+
+    // Создаём нового пользователя
+    const newUser = {
       fullName,
       email,
       phone,
       password,
-    });
-    alert("Регистрация прошла успешно!");
+      role: "customer", // обязательно указываем роль
+      blocked: false, // покупатель активен
+    };
 
-    // Переход на страницу входа
+    users.push(newUser);
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Регистрация прошла успешно!");
     window.location.href = "../login/login.html";
   });

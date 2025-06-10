@@ -2,9 +2,10 @@ const orderItemsContainer = document.getElementById("orderItems");
 const form = document.getElementById("checkoutForm");
 
 const orderItems = JSON.parse(localStorage.getItem("checkoutItems")) || [];
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
 function renderOrderItems() {
-  if (orderItems.length === 0) {
+  if (orderItems.length === 0 || !currentUser) {
     orderItemsContainer.innerHTML =
       "<p>Нет выбранных товаров для оформления.</p>";
     form.style.display = "none";
@@ -34,6 +35,7 @@ function renderOrderItems() {
 
 form.addEventListener("submit", function (e) {
   e.preventDefault();
+
   const recipient = document.getElementById("recipient").value.trim();
   const address = document.getElementById("address").value.trim();
 
@@ -42,14 +44,34 @@ form.addEventListener("submit", function (e) {
     return;
   }
 
-  // Здесь может быть отправка на сервер. Пока просто имитируем оформление:
-  alert(`Заказ оформлен на имя ${recipient}. Доставка по адресу: ${address}.`);
+  if (!currentUser) {
+    alert("Вы не авторизованы.");
+    return;
+  }
 
-  // Очистим данные
+  // Формируем объект заказа
+  const newOrder = {
+    email: currentUser.email,
+    receiver: recipient,
+    address: address,
+    date: new Date().toLocaleDateString("ru-RU"),
+    items: orderItems.map((item) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+    })),
+  };
+
+  // Сохраняем заказ
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+  orders.push(newOrder);
+  localStorage.setItem("orders", JSON.stringify(orders));
+
+  // Очистим корзину
   localStorage.removeItem("cart");
   localStorage.removeItem("checkoutItems");
 
-  // Перенаправим (можно сделать заказ.html с подтверждением)
+  // Перенаправление на страницу успешного оформления
   window.location.href = "order-success.html";
 });
 

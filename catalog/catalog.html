@@ -2,18 +2,24 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Каталог запчастей</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="catalog-header">
       <h1>Каталог автозапчастей</h1>
-      <button onclick="goToCart()">Корзина 🛒</button>
+      <div class="catalog-nav">
+        <span id="userGreeting">Здравствуйте, пользователь</span>
+        <a href="../profile/profile.html">Личный кабинет</a>
+        <a href="./cart/cart.html">Корзина</a>
+        <button onclick="logout()">Выйти</button>
+      </div>
     </header>
 
-    <main class="product-list" id="productList">
-      <!-- Товары будут добавлены через JS файл -->
+    <main>
+      <div class="product-list" id="productList">
+        <!-- Товары будут добавлены из JS -->
+      </div>
     </main>
 
     <script src="catalog.js"></script>

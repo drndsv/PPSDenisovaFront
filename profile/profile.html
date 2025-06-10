@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="profile.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h2>Личный кабинет</h2>
+
+      <div class="profile-info">
+        <p><strong>ФИО:</strong> <span id="userName"></span></p>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Телефон:</strong> <span id="userPhone"></span></p>
+      </div>
+
+      <h3>История заказов</h3>
+      <div id="orderHistory" class="order-history">
+        <!-- заказы появятся здесь -->
+      </div>
+
+      <button onclick="goBack()">Назад в каталог</button>
+      <button onclick="logout()">Выйти</button>
+    </div>
+
+    <script src="profile.js"></script>
+  </body>
+</html>
