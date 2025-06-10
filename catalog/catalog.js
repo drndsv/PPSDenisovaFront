@@ -1,26 +1,24 @@
-const products = [
-  { id: 1, name: "Тормозные колодки", brand: "Brembo", price: 4500 },
-  { id: 2, name: "Масляный фильтр", brand: "Bosch", price: 900 },
-  { id: 3, name: "Аккумулятор", brand: "Varta", price: 7200 },
-  { id: 4, name: "Фара передняя", brand: "Philips", price: 3100 },
-];
+function renderProducts() {
+  const storedProducts = JSON.parse(localStorage.getItem("products")) || [];
+  const productList = document.getElementById("productList");
+  productList.innerHTML = "";
 
-const productList = document.getElementById("productList");
-
-products.forEach((product) => {
-  const card = document.createElement("div");
-  card.className = "product-card";
-  card.innerHTML = `
+  storedProducts.forEach((product, index) => {
+    const card = document.createElement("div");
+    card.className = "product-card";
+    card.innerHTML = `
       <h3>${product.name}</h3>
       <p>Производитель: ${product.brand}</p>
       <p>Цена: ${product.price} ₽</p>
-      <button onclick="addToCart(${product.id})">В корзину</button>
+      <button onclick="addToCart(${index})">В корзину</button>
     `;
-  productList.appendChild(card);
-});
+    productList.appendChild(card);
+  });
+}
 
-function addToCart(productId) {
-  const product = products.find((p) => p.id === productId);
+function addToCart(index) {
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+  const product = products[index];
   let cart = JSON.parse(localStorage.getItem("cart")) || [];
   cart.push(product);
   localStorage.setItem("cart", JSON.stringify(cart));
@@ -42,10 +40,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   greetingEl.textContent = `Здравствуйте, ${user.fullName || "пользователь"}!`;
 
-  // здесь же можешь отрисовывать товары
+  renderProducts();
 });
 
-// Выход
 function logout() {
   localStorage.removeItem("currentUser");
   window.location.href = "../../login/login.html";

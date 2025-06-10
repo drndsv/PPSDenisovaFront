@@ -1,134 +1,236 @@
-// Открытие формы для добавления товара
-function openProductForm() {
-  document.getElementById("addProductForm").style.display = "block";
+function openTab(event, tabId) {
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((el) => el.classList.add("hidden"));
+  document
+    .querySelectorAll(".tab-button")
+    .forEach((btn) => btn.classList.remove("active"));
+  document.getElementById(tabId).classList.remove("hidden");
+  event.target.classList.add("active");
 }
 
-// Закрытие формы для добавления товара
+// товары
+function openProductForm(index = null) {
+  const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
+  const sel = document.getElementById("productSupplier");
+  sel.innerHTML = '<option value="">— без поставщика —</option>';
+  suppliers.forEach((s, i) => {
+    sel.insertAdjacentHTML(
+      "beforeend",
+      `<option value="${i}">${s.name}</option>`
+    );
+  });
+
+  const form = document.getElementById("productForm");
+  form.reset();
+  document.getElementById("editIndex").value = index !== null ? index : "";
+
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+
+  if (index !== null && products[index]) {
+    document.getElementById("productName").value = products[index].name;
+    document.getElementById("productBrand").value = products[index].brand;
+    document.getElementById("productPrice").value = products[index].price;
+    document.getElementById("productStock").value = products[index].stock;
+    document.getElementById("productFormTitle").textContent =
+      "Редактировать товар";
+    document.getElementById("submitProductBtn").textContent = "Сохранить";
+    document.getElementById("deleteProductBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("productFormTitle").textContent = "Добавить товар";
+    document.getElementById("submitProductBtn").textContent = "Добавить";
+    document.getElementById("deleteProductBtn").style.display = "none";
+  }
+
+  document.getElementById("addProductForm").style.display = "flex";
+}
+
+function deleteProduct() {
+  const index = document.getElementById("editIndex").value;
+  if (index === "") return;
+
+  const confirmed = confirm("Вы уверены, что хотите удалить этот товар?");
+  if (!confirmed) return;
+
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+  products.splice(index, 1);
+  localStorage.setItem("products", JSON.stringify(products));
+  closeProductForm();
+  loadProducts();
+}
+
 function closeProductForm() {
   document.getElementById("addProductForm").style.display = "none";
 }
 
-// Открытие формы для добавления поставщика
 function openSupplierForm() {
-  document.getElementById("addSupplierForm").style.display = "block";
+  document.getElementById("addSupplierForm").style.display = "flex";
 }
 
-// Закрытие формы для добавления поставщика
 function closeSupplierForm() {
   document.getElementById("addSupplierForm").style.display = "none";
 }
 
-// Обработчик отправки формы товара
 document.getElementById("productForm").addEventListener("submit", function (e) {
   e.preventDefault();
-
-  const productName = document.getElementById("productName").value.trim();
-  const productBrand = document.getElementById("productBrand").value.trim();
-  const productPrice = parseFloat(
-    document.getElementById("productPrice").value.trim()
-  );
-  const productStock = parseInt(
-    document.getElementById("productStock").value.trim()
-  );
-
+  const index = document.getElementById("editIndex").value;
   const product = {
-    name: productName,
-    brand: productBrand,
-    price: productPrice,
-    stock: productStock,
+    name: document.getElementById("productName").value.trim(),
+    brand: document.getElementById("productBrand").value.trim(),
+    price: parseFloat(document.getElementById("productPrice").value.trim()),
+    stock: parseInt(document.getElementById("productStock").value.trim()),
   };
 
-  // Добавление товара в список (пока только в localStorage)
   const products = JSON.parse(localStorage.getItem("products")) || [];
-  products.push(product);
-  localStorage.setItem("products", JSON.stringify(products));
 
-  alert("Товар добавлен!");
+  if (index) {
+    products[index] = product;
+  } else {
+    products.push(product);
+  }
+
+  localStorage.setItem("products", JSON.stringify(products));
   closeProductForm();
   loadProducts();
 });
 
-// Обработчик отправки формы поставщика
+// document
+//   .getElementById("supplierForm")
+//   .addEventListener("submit", function (e) {
+//     e.preventDefault();
+//     const supplier = {
+//       name: document.getElementById("supplierName").value.trim(),
+//       email: document.getElementById("supplierEmail").value.trim(),
+//       phone: document.getElementById("supplierPhone").value.trim(),
+//     };
+
+//     const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
+//     suppliers.push(supplier);
+//     localStorage.setItem("suppliers", JSON.stringify(suppliers));
+//     closeSupplierForm();
+//     loadSuppliers();
+//   });
+
+function loadProducts() {
+  const products = JSON.parse(localStorage.getItem("products")) || [];
+  const list = document.getElementById("productList");
+  list.innerHTML = "<h3>Список товаров</h3>";
+  products.forEach((p, index) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p><strong>${p.name}</strong><br>
+      Бренд: ${p.brand}<br>
+      Цена: ${p.price} ₽<br>
+      В наличии: ${p.stock}<br>
+      <button onclick="openProductForm(${index})">Редактировать</button></p>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// --- Поставщики ---
+function openSupplierForm(index = null) {
+  const form = document.getElementById("supplierForm");
+  form.reset();
+  document.getElementById("editSupplierIndex").value =
+    index !== null ? index : "";
+
+  const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
+  if (index !== null && suppliers[index]) {
+    document.getElementById("supplierName").value = suppliers[index].name;
+    document.getElementById("supplierEmail").value = suppliers[index].email;
+    document.getElementById("supplierPhone").value = suppliers[index].phone;
+    document.getElementById("supplierFormTitle").textContent =
+      "Редактировать поставщика";
+    document.getElementById("submitSupplierBtn").textContent = "Сохранить";
+    document.getElementById("deleteSupplierBtn").style.display = "inline-block";
+  } else {
+    document.getElementById("supplierFormTitle").textContent =
+      "Добавить поставщика";
+    document.getElementById("submitSupplierBtn").textContent = "Добавить";
+    document.getElementById("deleteSupplierBtn").style.display = "none";
+  }
+
+  document.getElementById("addSupplierForm").style.display = "flex";
+}
+
+function closeSupplierForm() {
+  const form = document.getElementById("supplierForm");
+  form.reset();
+  document.getElementById("editSupplierIndex").value = "";
+  document.getElementById("addSupplierForm").style.display = "none";
+}
+
 document
   .getElementById("supplierForm")
   .addEventListener("submit", function (e) {
     e.preventDefault();
-
-    const supplierName = document.getElementById("supplierName").value.trim();
-    const supplierEmail = document.getElementById("supplierEmail").value.trim();
-    const supplierPhone = document.getElementById("supplierPhone").value.trim();
-
+    const idx = document.getElementById("editSupplierIndex").value;
     const supplier = {
-      name: supplierName,
-      email: supplierEmail,
-      phone: supplierPhone,
+      name: document.getElementById("supplierName").value.trim(),
+      email: document.getElementById("supplierEmail").value.trim(),
+      phone: document.getElementById("supplierPhone").value.trim(),
     };
 
-    // Добавление поставщика в список (пока только в localStorage)
     const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
-    suppliers.push(supplier);
-    localStorage.setItem("suppliers", JSON.stringify(suppliers));
+    if (idx !== "") suppliers[idx] = supplier;
+    else suppliers.push(supplier);
 
-    alert("Поставщик добавлен!");
+    localStorage.setItem("suppliers", JSON.stringify(suppliers));
     closeSupplierForm();
     loadSuppliers();
   });
 
-// Загрузка товаров из localStorage
-function loadProducts() {
-  const products = JSON.parse(localStorage.getItem("products")) || [];
-  const productList = document.getElementById("productList");
-
-  productList.innerHTML = "<h3>Список товаров</h3>";
-  products.forEach((product) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<p><strong>${product.name}</strong><br>Бренд: ${product.brand}<br>Цена: ${product.price} ₽<br>В наличии: ${product.stock}</p>`;
-    productList.appendChild(div);
-  });
+function deleteSupplier() {
+  const idx = document.getElementById("editSupplierIndex").value;
+  if (idx === "") return;
+  if (!confirm("Удалить поставщика?")) return;
+  const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
+  suppliers.splice(idx, 1);
+  localStorage.setItem("suppliers", JSON.stringify(suppliers));
+  closeSupplierForm();
+  loadSuppliers();
 }
 
-// Загрузка поставщиков из localStorage
 function loadSuppliers() {
   const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
-  const supplierList = document.getElementById("supplierList");
-
-  supplierList.innerHTML = "<h3>Список поставщиков</h3>";
-  suppliers.forEach((supplier) => {
-    const div = document.createElement("div");
-    div.innerHTML = `<p><strong>${supplier.name}</strong><br>Email: ${supplier.email}<br>Телефон: ${supplier.phone}</p>`;
-    supplierList.appendChild(div);
-  });
-}
-
-// Загрузка заказов (для примера, можно добавить дополнительную логику для подтверждения/отклонения)
-function loadOrders() {
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  const orderList = document.getElementById("orderList");
-
-  orderList.innerHTML = "<h3>Список заказов</h3>";
-  orders.forEach((order) => {
+  const list = document.getElementById("supplierList");
+  list.innerHTML = "<h3>Список поставщиков</h3>";
+  suppliers.forEach((s, i) => {
     const div = document.createElement("div");
     div.innerHTML = `
-            <p><strong>Заказ №${order.id}</strong><br>Покупатель: ${order.customerName}<br>Адрес: ${order.address}<br><br>
-            <button class="confirmOrderBtn" onclick="confirmOrder(${order.id})">Подтвердить</button>
-            <button class="rejectOrderBtn" onclick="rejectOrder(${order.id})">Отклонить</button></p>
-        `;
-    orderList.appendChild(div);
+      <p><strong>${s.name}</strong><br>
+      Email: ${s.email}<br>Телефон: ${s.phone}<br>
+      <button onclick="openSupplierForm(${i})">Редактировать</button></p>`;
+    list.appendChild(div);
   });
 }
 
-// Подтверждение заказа
-function confirmOrder(orderId) {
-  alert(`Заказ №${orderId} подтвержден.`);
+function loadOrders() {
+  const orders = JSON.parse(localStorage.getItem("orders")) || [];
+  const list = document.getElementById("orderList");
+  list.innerHTML = "<h3>Список заказов</h3>";
+  orders.forEach((o) => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p><strong>Заказ №${o.id}</strong><br>
+      Покупатель: ${o.customerName}<br>
+      Адрес: ${o.address}<br>
+      <button onclick="confirmOrder(${o.id})">Подтвердить</button>
+      <button onclick="rejectOrder(${o.id})">Отклонить</button></p>`;
+    list.appendChild(div);
+  });
 }
 
-// Отклонение заказа
-function rejectOrder(orderId) {
-  alert(`Заказ №${orderId} отклонен.`);
+function confirmOrder(id) {
+  alert(`Заказ №${id} подтвержден.`);
 }
 
-// Загрузка данных при инициализации
-document.addEventListener("DOMContentLoaded", function () {
+function rejectOrder(id) {
+  alert(`Заказ №${id} отклонен.`);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
   loadProducts();
   loadSuppliers();
   loadOrders();

@@ -24,6 +24,41 @@
       <button onclick="logout()">Выйти</button>
     </div>
 
+    <!-- Модальное окно для редактирования заказа -->
+    <div id="editOrderModal" class="modal">
+      <div class="modal-content">
+        <h3>Изменить заказ</h3>
+        <form id="editOrderForm">
+          <label for="editReceiver">Получатель:</label>
+          <input type="text" id="editReceiver" required />
+          <label for="editAddress">Адрес:</label>
+          <input type="text" id="editAddress" required />
+
+          <h4>Товары в заказе</h4>
+          <table id="orderItemsTable">
+            <!-- товары появятся здесь -->
+          </table>
+
+          <button type="button" onclick="openCatalog()">
+            Добавить товар из каталога
+          </button>
+          <button type="submit">Сохранить изменения</button>
+          <button type="button" onclick="closeEditModal()">Закрыть</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Модальное окно для выбора товара из каталога -->
+    <div id="catalogModal" class="modal">
+      <div class="modal-content">
+        <h3>Выберите товар из каталога</h3>
+        <div id="catalogItemsList">
+          <!-- список товаров появится здесь -->
+        </div>
+        <button type="button" onclick="closeCatalogModal()">Закрыть</button>
+      </div>
+    </div>
+
     <script src="profile.js"></script>
   </body>
 </html>
