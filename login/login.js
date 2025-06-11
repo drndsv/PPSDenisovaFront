@@ -25,7 +25,7 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
 
   // Перенаправляем по роли
   if (user.role === "admin") {
-    window.location.href = "admin.html";
+    window.location.href = "../../admin/admin.html";
   } else if (user.role === "moderator") {
     window.location.href = "../../moderator/moderator.html";
   } else if (user.role === "customer") {
