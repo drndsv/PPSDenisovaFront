@@ -1,6 +1,16 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user || user.roleId !== 1) {
+    window.location.href = "../../login/login.html";
+    return;
+  }
+
+  const greetingElem = document.getElementById("adminGreeting");
+  if (greetingElem) {
+    greetingElem.textContent = `Здравствуйте, ${user.fullName}!`;
+  }
+
   loadUsers();
-  loadStaff();
 
   document
     .getElementById("registerForm")
@@ -8,171 +18,195 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("editForm")
     .addEventListener("submit", saveEditedUser);
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+
+  // Показываем вкладку "Покупатели" по умолчанию
+  showTab("customers");
 });
 
-function showTab(id) {
-  document.querySelectorAll(".tab").forEach((tab) => {
-    tab.style.display = "none";
-  });
-  document.getElementById(id).style.display = "block";
+function logout() {
+  localStorage.removeItem("currentUser");
+  window.location.href = "../../login/login.html";
 }
+
+let allUsers = [];
 
 function loadUsers() {
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const tbody = document.querySelector("#customersTable tbody");
-  tbody.innerHTML = "";
-
-  users
-    .filter((u) => u.role === "customer")
-    .forEach((user, index) => {
-      tbody.innerHTML += createUserRow(user, index, false);
+  fetch("http://localhost:8080/application_user/getAll")
+    .then((response) => response.json())
+    .then((data) => {
+      allUsers = data;
+      renderUsers();
+      renderStaff();
+    })
+    .catch((error) => {
+      console.error("Ошибка при загрузке пользователей:", error);
+      alert("Не удалось загрузить пользователей");
     });
 }
 
-function loadStaff() {
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const tbody = document.querySelector("#staffTable tbody");
-  tbody.innerHTML = "";
+function renderUsers() {
+  const table = document.querySelector("#customersTable tbody");
+  table.innerHTML = "";
 
-  users
-    .filter((u) => u.role !== "customer")
-    .forEach((user, index) => {
-      tbody.innerHTML += createUserRow(user, index, true);
+  allUsers
+    .filter((u) => u.roleId === 3) // Покупатели
+    .forEach((user) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${user.id}</td>
+        <td>${user.email}</td>
+        <td>${user.password}</td>
+        <td>${user.fullName}</td>
+        <td>${user.phone}</td>
+        <td>${user.isActive ? "Активен" : "Заблокирован"}</td>
+        
+        <td>
+          <button onclick="toggleUserStatus(${user.id})">${
+        user.isActive ? "Заблокировать" : "Разблокировать"
+      }</button>
+          <button onclick="openEditModal(${user.id})">Редактировать</button>
+        </td>
+      `;
+      table.appendChild(row);
     });
 }
 
-function createUserRow(user, index, showRole = false) {
-  return `
-    <tr>
-      <td>${user.id ?? index + 1}</td>
-      <td>${user.email}</td>
-      <td>${user.password}</td>
-      <td>${user.fullName}</td>
-      <td>${user.phone}</td>
-      <td class="${user.active ? "green" : "red"}">
-        ${user.active ? "Активен" : "Неактивен"}
-      </td>
-      ${showRole ? `<td>${user.role}</td>` : ""}
-      <td>${user.blocked ? "Заблокирован" : "Не заблокирован"}</td>
-      <td>
-        <button onclick="toggleBlock('${user.email}')">
-          ${user.blocked ? "Разблокировать" : "Заблокировать"}
-        </button>
-        <button onclick="editUser('${user.email}')">Изменить</button>
-        <button onclick="deleteUser('${user.email}')">Удалить</button>
-      </td>
-    </tr>
-  `;
+function renderStaff() {
+  const table = document.querySelector("#staffTable tbody");
+  table.innerHTML = "";
+
+  allUsers
+    .filter((u) => u.roleId === 1 || u.roleId === 2) // Админ или модератор
+    .forEach((user) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${user.id}</td>
+        <td>${user.email}</td>
+        <td>${user.password}</td>
+        <td>${user.fullName}</td>
+        <td>${user.phone}</td>
+        <td>${user.isActive ? "Активен" : "Заблокирован"}</td>
+        <td>${user.roleId === 1 ? "Админ" : "Модератор"}</td>
+        <td>
+          <button onclick="toggleUserStatus(${user.id})">${
+        user.isActive ? "Заблокировать" : "Разблокировать"
+      }</button>
+          <button onclick="openEditModal(${user.id})">Редактировать</button>
+        </td>
+      `;
+      table.appendChild(row);
+    });
 }
 
-function toggleBlock(email) {
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const index = users.findIndex((u) => u.email === email);
-  if (index !== -1) {
-    users[index].blocked = !users[index].blocked;
-    localStorage.setItem("users", JSON.stringify(users));
-    loadUsers();
-    loadStaff();
-  }
+function toggleUserStatus(userId) {
+  const user = allUsers.find((u) => u.id === userId);
+  if (!user) return;
+
+  const updatedUser = { ...user, isActive: !user.isActive };
+
+  fetch("http://localhost:8080/application_user/update", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedUser),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Ошибка обновления пользователя");
+      return res.text();
+    })
+    .then(() => loadUsers());
 }
 
-function editUser(email) {
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-  const user = users.find((u) => u.email === email);
-  if (user) {
-    openEditModal(user);
-  } else {
-    alert("Пользователь не найден.");
-  }
-}
+function openEditModal(userId) {
+  const user = allUsers.find((u) => u.id === userId);
+  if (!user) return;
 
-function openEditModal(user) {
-  document.getElementById("editUserId").value = user.id ?? generateUserId(user);
+  document.getElementById("editUserId").value = user.id;
   document.getElementById("editEmail").value = user.email;
   document.getElementById("editPassword").value = user.password;
   document.getElementById("editFullName").value = user.fullName;
   document.getElementById("editPhone").value = user.phone;
-  document.getElementById("editRole").value = user.role;
+  document.getElementById("editRole").value =
+    user.roleId === 1 ? "admin" : user.roleId === 2 ? "moderator" : "customer";
 
-  document.getElementById("editModal").style.display = "flex";
+  document.getElementById("editModal").style.display = "block";
 }
 
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-}
+function saveEditedUser(event) {
+  event.preventDefault();
 
-function saveEditedUser(e) {
-  e.preventDefault();
+  const updatedUser = {
+    id: Number(document.getElementById("editUserId").value),
+    email: document.getElementById("editEmail").value,
+    password: document.getElementById("editPassword").value,
+    fullName: document.getElementById("editFullName").value,
+    phone: document.getElementById("editPhone").value,
+    roleId:
+      document.getElementById("editRole").value === "admin"
+        ? 1
+        : document.getElementById("editRole").value === "moderator"
+        ? 2
+        : 3,
+    isActive: true,
+  };
 
-  const id = parseInt(document.getElementById("editUserId").value);
-  const users = JSON.parse(localStorage.getItem("users")) || [];
-
-  const index = users.findIndex((u) => (u.id ?? generateUserId(u)) === id);
-  if (index !== -1) {
-    users[index].email = document.getElementById("editEmail").value.trim();
-    users[index].password = document
-      .getElementById("editPassword")
-      .value.trim();
-    users[index].fullName = document
-      .getElementById("editFullName")
-      .value.trim();
-    users[index].phone = document.getElementById("editPhone").value.trim();
-    users[index].role = document.getElementById("editRole").value;
-
-    localStorage.setItem("users", JSON.stringify(users));
-    loadUsers();
-    loadStaff();
-    closeEditModal();
-  } else {
-    alert("Не удалось сохранить изменения: пользователь не найден.");
-  }
+  fetch("http://localhost:8080/application_user/update", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedUser),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Ошибка при сохранении");
+      return res.text();
+    })
+    .then(() => {
+      document.getElementById("editModal").style.display = "none";
+      loadUsers();
+    });
 }
 
 function registerUser(event) {
   event.preventDefault();
 
-  const email = document.getElementById("regEmail").value;
-  const password = document.getElementById("regPassword").value;
-  const fullName = document.getElementById("regFullName").value;
-  const phone = document.getElementById("regPhone").value;
-  const role = document.getElementById("regRole").value;
-
-  const users = JSON.parse(localStorage.getItem("users")) || [];
   const newUser = {
-    id: generateNextId(users),
-    email,
-    password,
-    fullName,
-    phone,
-    role,
-    active: true,
-    blocked: false,
+    email: document.getElementById("regEmail").value,
+    password: document.getElementById("regPassword").value,
+    fullName: document.getElementById("regFullName").value,
+    phone: document.getElementById("regPhone").value,
+    roleId:
+      document.getElementById("regRole").value === "admin"
+        ? 1
+        : document.getElementById("regRole").value === "moderator"
+        ? 2
+        : 3,
+    isActive: true,
   };
 
-  users.push(newUser);
-  localStorage.setItem("users", JSON.stringify(users));
-
-  loadUsers();
-  loadStaff();
-  document.getElementById("registerForm").reset();
-  alert("Пользователь зарегистрирован!");
+  fetch("http://localhost:8080/application_user/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newUser),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Ошибка при регистрации");
+      return res.json();
+    })
+    .then(() => {
+      alert("Пользователь успешно зарегистрирован");
+      document.getElementById("registerForm").reset();
+      loadUsers();
+    });
 }
 
-function generateNextId(users) {
-  return users.length > 0 ? Math.max(...users.map((u) => u.id ?? 0)) + 1 : 1;
-}
+// Функция переключения вкладок
+function showTab(tabName) {
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach((tab) => {
+    tab.style.display = "none";
+  });
 
-function generateUserId(user) {
-  return `${user.email}_${user.phone}`;
-}
-
-function deleteUser(email) {
-  if (!confirm(`Вы уверены, что хотите удалить пользователя ${email}?`)) return;
-
-  let users = JSON.parse(localStorage.getItem("users")) || [];
-  users = users.filter((u) => u.email !== email);
-  localStorage.setItem("users", JSON.stringify(users));
-
-  loadUsers();
-  loadStaff();
+  const activeTab = document.getElementById(tabName);
+  if (activeTab) {
+    activeTab.style.display = "block";
+  }
 }

@@ -1,3 +1,19 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user || user.role !== "customer") {
+    // Проверяем строковую роль
+    window.location.href = "../../login/login.html";
+    return;
+  }
+
+  document.getElementById("userGreeting").textContent = `Здравствуйте, ${
+    user.fullName || "пользователь"
+  }!`;
+
+  renderProducts();
+  document.getElementById("logoutBtn").addEventListener("click", logout);
+});
+
 function renderProducts() {
   const storedProducts = JSON.parse(localStorage.getItem("products")) || [];
   const productList = document.getElementById("productList");
@@ -28,20 +44,6 @@ function addToCart(index) {
 function goToCart() {
   window.location.href = "../catalog/cart/cart.html";
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  const greetingEl = document.getElementById("userGreeting");
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-
-  if (!user || user.role !== "customer") {
-    window.location.href = "../../login/login.html";
-    return;
-  }
-
-  greetingEl.textContent = `Здравствуйте, ${user.fullName || "пользователь"}!`;
-
-  renderProducts();
-});
 
 function logout() {
   localStorage.removeItem("currentUser");

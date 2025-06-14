@@ -5,35 +5,36 @@
     <title>Панель администратора</title>
     <link rel="stylesheet" href="admin.css" />
   </head>
-  <!-- Модальное окно редактирования -->
-  <div id="editModal" class="modal" style="display: none">
-    <div class="modal-content">
-      <span class="close" onclick="closeEditModal()">&times;</span>
-      <h2>Редактировать пользователя</h2>
-      <form id="editForm">
-        <input type="hidden" id="editUserId" />
-        <input type="email" id="editEmail" placeholder="Email" required />
-        <input
-          type="password"
-          id="editPassword"
-          placeholder="Пароль"
-          required
-        />
-        <input type="text" id="editFullName" placeholder="ФИО" required />
-        <input type="tel" id="editPhone" placeholder="Телефон" required />
-        <select id="editRole">
-          <option value="customer">Покупатель</option>
-          <option value="moderator">Модератор</option>
-          <option value="admin">Администратор</option>
-        </select>
-        <button type="submit">Сохранить</button>
-      </form>
-    </div>
-  </div>
-
   <body>
+    <!-- Модальное окно редактирования -->
+    <div id="editModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Редактировать пользователя</h2>
+        <form id="editForm">
+          <input type="hidden" id="editUserId" />
+          <input type="email" id="editEmail" placeholder="Email" required />
+          <input
+            type="password"
+            id="editPassword"
+            placeholder="Пароль"
+            required
+          />
+          <input type="text" id="editFullName" placeholder="ФИО" required />
+          <input type="tel" id="editPhone" placeholder="Телефон" required />
+          <select id="editRole">
+            <option value="customer">Покупатель</option>
+            <option value="moderator">Модератор</option>
+            <option value="admin">Администратор</option>
+          </select>
+          <button type="submit">Сохранить</button>
+        </form>
+      </div>
+    </div>
+
     <div class="header">
-      <h1>Добро пожаловать, Администратор</h1>
+      <h1 id="adminGreeting">Добро пожаловать</h1>
+      <button id="logoutBtn">Выйти</button>
     </div>
 
     <div class="tabs">
@@ -53,7 +54,7 @@
             <th>ФИО</th>
             <th>Телефон</th>
             <th>Активность</th>
-            <th>Статус</th>
+            <!-- <th>Статус</th> -->
             <th>Действия</th>
           </tr>
         </thead>
@@ -73,7 +74,7 @@
             <th>Телефон</th>
             <th>Активность</th>
             <th>Роль</th>
-            <th>Статус</th>
+            <!-- <th>Статус</th> -->
             <th>Действия</th>
           </tr>
         </thead>

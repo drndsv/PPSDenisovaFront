@@ -4,33 +4,63 @@ document.getElementById("loginForm").addEventListener("submit", function (e) {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
 
-  // Получаем список пользователей (записан в localStorage при регистрации)
-  const users = JSON.parse(localStorage.getItem("users")) || [];
+  fetch(
+    `http://localhost:8080/application_user/isUserExist/${email}/${password}`,
+    {
+      method: "GET",
+    }
+  )
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Ошибка при попытке входа");
+      }
+      return response.json();
+    })
+    .then((user) => {
+      if (!user || !user.id) {
+        alert("Неверные учетные данные");
+        return;
+      }
 
-  // Ищем пользователя с введёнными email и паролем
-  const user = users.find((u) => u.email === email && u.password === password);
+      if (!user.isActive) {
+        alert("Ваш аккаунт заблокирован");
+        return;
+      }
 
-  if (!user) {
-    alert("Неверные учетные данные");
-    return;
-  }
+      // Определяем роль и сохраняем пользователя с ролью в localStorage
+      switch (user.roleId) {
+        case 1:
+          user.role = "admin";
+          break;
+        case 2:
+          user.role = "moderator";
+          break;
+        case 3:
+          user.role = "customer";
+          break;
+        default:
+          user.role = "unknown";
+      }
 
-  if (user.blocked) {
-    alert("Ваш аккаунт заблокирован");
-    return;
-  }
+      localStorage.setItem("currentUser", JSON.stringify(user));
 
-  // Сохраняем авторизованного пользователя
-  localStorage.setItem("currentUser", JSON.stringify(user));
-
-  // Перенаправляем по роли
-  if (user.role === "admin") {
-    window.location.href = "../../admin/admin.html";
-  } else if (user.role === "moderator") {
-    window.location.href = "../../moderator/moderator.html";
-  } else if (user.role === "customer") {
-    window.location.href = "../../catalog/catalog.html";
-  } else {
-    alert("Неизвестная роль пользователя");
-  }
+      // Перенаправление в зависимости от роли
+      switch (user.role) {
+        case "admin":
+          window.location.href = "/admin/admin.html";
+          break;
+        case "moderator":
+          window.location.href = "/moderator/moderator.html";
+          break;
+        case "customer":
+          window.location.href = "/catalog/catalog.html";
+          break;
+        default:
+          alert("Неизвестная роль пользователя");
+      }
+    })
+    .catch((err) => {
+      alert(err.message || "Ошибка входа в систему");
+      console.error("Ошибка входа:", err);
+    });
 });
