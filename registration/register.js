@@ -8,29 +8,30 @@ document
     const phone = document.getElementById("phone").value.trim();
     const password = document.getElementById("password").value.trim();
 
-    // Получаем текущий список пользователей или создаём новый
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    // Проверка на уникальность email
-    const existingUser = users.find((u) => u.email === email);
-    if (existingUser) {
-      alert("Пользователь с таким email уже зарегистрирован");
-      return;
-    }
-
-    // Создаём нового пользователя
+    // Создаём новый объект пользователя
     const newUser = {
       fullName,
       email,
       phone,
       password,
-      role: "customer", // обязательно указываем роль
-      blocked: false, // покупатель активен
+      roleId: 3, // роль покупателя (заменили 'role' на 'roleId' с ID 3)
+      isActive: true, // пользователь активен (заменили 'blocked' на 'isActive')
     };
 
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    alert("Регистрация прошла успешно!");
-    window.location.href = "../login/login.html";
+    // Отправляем данные на сервер через POST-запрос
+    fetch("http://localhost:8080/application_user/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newUser),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        alert("Регистрация прошла успешно!");
+        window.location.href = "../login/login.html";
+      })
+      .catch((error) => {
+        alert("Ошибка при регистрации: " + error);
+      });
   });

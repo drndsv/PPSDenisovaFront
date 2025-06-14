@@ -5,10 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  const greetingElem = document.getElementById("adminGreeting");
-  if (greetingElem) {
-    greetingElem.textContent = `Здравствуйте, ${user.fullName}!`;
-  }
+  document.getElementById(
+    "adminGreeting"
+  ).textContent = `Здравствуйте, ${user.fullName}!`;
 
   loadUsers();
 
@@ -20,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("submit", saveEditedUser);
   document.getElementById("logoutBtn").addEventListener("click", logout);
 
-  // Показываем вкладку "Покупатели" по умолчанию
   showTab("customers");
 });
 
@@ -50,7 +48,7 @@ function renderUsers() {
   table.innerHTML = "";
 
   allUsers
-    .filter((u) => u.roleId === 3) // Покупатели
+    .filter((u) => u.roleId === 3)
     .forEach((user) => {
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -60,12 +58,12 @@ function renderUsers() {
         <td>${user.fullName}</td>
         <td>${user.phone}</td>
         <td>${user.isActive ? "Активен" : "Заблокирован"}</td>
-        
         <td>
           <button onclick="toggleUserStatus(${user.id})">${
         user.isActive ? "Заблокировать" : "Разблокировать"
       }</button>
           <button onclick="openEditModal(${user.id})">Редактировать</button>
+          <button onclick="deleteUser(${user.id})">Удалить</button>
         </td>
       `;
       table.appendChild(row);
@@ -77,7 +75,7 @@ function renderStaff() {
   table.innerHTML = "";
 
   allUsers
-    .filter((u) => u.roleId === 1 || u.roleId === 2) // Админ или модератор
+    .filter((u) => u.roleId === 1 || u.roleId === 2)
     .forEach((user) => {
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -93,6 +91,7 @@ function renderStaff() {
         user.isActive ? "Заблокировать" : "Разблокировать"
       }</button>
           <button onclick="openEditModal(${user.id})">Редактировать</button>
+          <button onclick="deleteUser(${user.id})">Удалить</button>
         </td>
       `;
       table.appendChild(row);
@@ -198,10 +197,28 @@ function registerUser(event) {
     });
 }
 
-// Функция переключения вкладок
+function deleteUser(userId) {
+  if (!confirm("Вы уверены, что хотите удалить пользователя?")) return;
+
+  fetch(`http://localhost:8080/application_user/delete/${userId}`, {
+    method: "DELETE",
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Ошибка при удалении пользователя");
+      return res.text();
+    })
+    .then(() => {
+      alert("Пользователь удалён");
+      loadUsers();
+    })
+    .catch((error) => {
+      console.error("Ошибка при удалении:", error);
+      alert("Не удалось удалить пользователя");
+    });
+}
+
 function showTab(tabName) {
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach((tab) => {
+  document.querySelectorAll(".tab").forEach((tab) => {
     tab.style.display = "none";
   });
 
@@ -209,4 +226,8 @@ function showTab(tabName) {
   if (activeTab) {
     activeTab.style.display = "block";
   }
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none";
 }
