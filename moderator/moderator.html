@@ -16,58 +16,67 @@
 
     <div class="container">
       <div class="tabs">
-        <button class="tab-button active" onclick="openTab(event, 'products')">
-          Товары
-        </button>
-        <button class="tab-button" onclick="openTab(event, 'suppliers')">
-          Поставщики
-        </button>
-        <button class="tab-button" onclick="openTab(event, 'orders')">
-          Заказы
-        </button>
+        <button class="tab-button active" data-tab="products">Товары</button>
+        <button class="tab-button" data-tab="suppliers">Поставщики</button>
+        <button class="tab-button" data-tab="orders">Заказы</button>
       </div>
 
+      <!-- Вкладка: Товары -->
       <div class="tab-content" id="products">
         <div class="actions">
-          <button onclick="openProductForm()">Добавить товар</button>
+          <button id="addProductBtn">Добавить товар</button>
         </div>
-        <div id="productList"></div>
+        <div id="productList">
+          <table id="productTable">
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Бренд</th>
+                <th>Цена</th>
+                <th>В наличии</th>
+                <th>Поставщик</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
+      <!-- Вкладка: Поставщики -->
       <div class="tab-content hidden" id="suppliers">
         <div class="actions">
-          <button onclick="openSupplierForm()">Добавить поставщика</button>
+          <button id="addSupplierBtn">Добавить поставщика</button>
         </div>
         <div id="supplierList"></div>
       </div>
 
+      <!-- Вкладка: Заказы -->
       <div class="tab-content hidden" id="orders">
         <div id="orderList"></div>
       </div>
     </div>
 
     <!-- Модальное окно: форма товара -->
-    <div id="addProductForm" class="modal">
+    <div id="addProductForm" class="modal hidden">
       <div class="modal-content">
         <h4 id="productFormTitle">Добавить товар</h4>
         <form id="productForm">
-          <input type="hidden" id="editIndex" />
+          <input type="hidden" id="editProductId" />
+          <label for="productArticle">Артикул:</label>
+          <input type="number" id="productArticle" required />
+
           <label for="productName">Название:</label>
           <input type="text" id="productName" required />
 
-          <label for="productBrand">Бренд:</label>
-          <input type="text" id="productBrand" required />
-
           <label for="productPrice">Цена:</label>
           <input type="number" id="productPrice" required />
-          <br />
+
+          <label for="productQuantity">Количество:</label>
+          <input type="number" id="productQuantity" required />
+
           <label for="productSupplier">Поставщик:</label>
-          <select id="productSupplier"></select>
-
-          <br />
-
-          <label for="productStock">В наличии:</label>
-          <input type="number" id="productStock" required />
+          <select id="productSupplier" required></select>
 
           <div class="form-buttons">
             <button type="submit" id="submitProductBtn">Добавить</button>
@@ -76,7 +85,6 @@
               type="button"
               id="deleteProductBtn"
               style="display: none; color: red"
-              onclick="deleteProduct()"
             >
               Удалить
             </button>
@@ -86,15 +94,17 @@
     </div>
 
     <!-- Модальное окно: форма поставщика -->
-    <div id="addSupplierForm" class="modal">
+    <div id="addSupplierForm" class="modal hidden">
       <div class="modal-content">
         <h4 id="supplierFormTitle">Добавить поставщика</h4>
         <form id="supplierForm">
           <input type="hidden" id="editSupplierIndex" />
           <label for="supplierName">Название:</label>
           <input type="text" id="supplierName" required />
+
           <label for="supplierEmail">Email:</label>
           <input type="email" id="supplierEmail" required />
+
           <label for="supplierPhone">Телефон:</label>
           <input type="text" id="supplierPhone" required />
 
@@ -105,7 +115,6 @@
               type="button"
               id="deleteSupplierBtn"
               style="display: none; color: red"
-              onclick="deleteSupplier()"
             >
               Удалить
             </button>

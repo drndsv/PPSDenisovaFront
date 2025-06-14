@@ -6,7 +6,7 @@ body {
 }
 
 .header {
-  background-color: #3f51b5; /* Синий цвет */
+  background-color: #3f51b5;
   color: white;
   padding: 20px;
   text-align: center;
@@ -15,16 +15,13 @@ body {
   margin-bottom: 20px;
 }
 
-h1 {
-  margin-bottom: 20px;
-}
-
 .container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 20px auto;
   background: white;
   padding: 20px;
   border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .tabs {
@@ -40,6 +37,11 @@ h1 {
   margin-right: 5px;
   cursor: pointer;
   font-weight: bold;
+  transition: background 0.3s;
+}
+
+.tab-button:hover {
+  background: #d5d5d5;
 }
 
 .tab-button.active {
@@ -60,8 +62,49 @@ h1 {
 }
 
 .actions button {
-  padding: 6px 12px;
-  margin-right: 10px;
+  padding: 8px 16px;
+  background: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.actions button:hover {
+  background: #303f9f;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+td button {
+  padding: 5px 10px;
+  margin-right: 5px;
+  background-color: #3f51b5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+td button:hover {
+  background-color: #303f9f;
 }
 
 .modal {
@@ -74,6 +117,7 @@ h1 {
   background: rgba(0, 0, 0, 0.4);
   justify-content: center;
   align-items: center;
+  z-index: 999;
 }
 
 .modal-content {
@@ -81,10 +125,47 @@ h1 {
   padding: 20px;
   width: 400px;
   border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.modal-content input {
+.modal-content h4 {
+  margin-top: 0;
+}
+
+.modal-content input,
+.modal-content select {
   width: 100%;
   margin-bottom: 10px;
-  padding: 6px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+.modal-content select {
+  background: white;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.form-buttons button {
+  padding: 8px 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#deleteProductBtn,
+#deleteSupplierBtn {
+  background-color: white;
+  border: 1px solid red;
+  color: red;
+}
+
+#deleteProductBtn:hover,
+#deleteSupplierBtn:hover {
+  background-color: red;
+  color: white;
 }

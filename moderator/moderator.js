@@ -1,3 +1,5 @@
+const API_URL = "http://localhost:8080";
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
   if (!user || (user.role !== "moderator" && user.role !== "admin")) {
@@ -10,161 +12,251 @@ document.addEventListener("DOMContentLoaded", () => {
   ).textContent = `Здравствуйте, ${user.fullName}!`;
   document.getElementById("logoutBtn").addEventListener("click", logout);
 
-  loadProducts();
-  loadSuppliers();
-  loadOrders();
+  document
+    .querySelectorAll(".tab-button")
+    .forEach((btn) =>
+      btn.addEventListener("click", (e) => openTab(e, btn.dataset.tab))
+    );
 
   document.getElementById("addProductBtn").addEventListener("click", () => {
-    document.getElementById("productForm").style.display = "block";
-    document.getElementById("addProductForm").reset();
-    document.getElementById("editIndex").value = "";
+    document.getElementById("productForm").reset();
+    document.getElementById("editProductId").value = "";
+    document.getElementById("addProductForm").style.display = "flex";
+  });
+
+  document
+    .getElementById("productForm")
+    .addEventListener("submit", saveProduct);
+  document.getElementById("deleteProductBtn").addEventListener("click", () => {
+    const id = document.getElementById("editProductId").value;
+    if (confirm("Удалить товар?")) deleteProduct(id);
   });
 
   document.getElementById("addSupplierBtn").addEventListener("click", () => {
-    document.getElementById("supplierForm").style.display = "block";
-    document.getElementById("addSupplierForm").reset();
-    document.getElementById("editSupplierIndex").value = "";
+    document.getElementById("supplierForm").reset();
+    document.getElementById("editSupplierId").value = "";
+    document.getElementById("addSupplierForm").style.display = "flex";
   });
 
   document
-    .getElementById("addProductForm")
-    .addEventListener("submit", saveProduct);
-  document
-    .getElementById("addSupplierForm")
+    .getElementById("supplierForm")
     .addEventListener("submit", saveSupplier);
+  document.getElementById("deleteSupplierBtn").addEventListener("click", () => {
+    const id = document.getElementById("editSupplierId").value;
+    if (confirm("Удалить поставщика?")) deleteSupplier(id);
+  });
 
-  document
-    .getElementById("deleteProductBtn")
-    .addEventListener("click", deleteSelectedProduct);
-  document
-    .getElementById("deleteSupplierBtn")
-    .addEventListener("click", deleteSelectedSupplier);
+  loadSuppliers(); // для селекта
+  loadProducts(); // для таблицы
+  loadSupplierList(); // таблица поставщиков
+  loadOrders(); // локальные заказы
 });
+
+function openTab(evt, tabName) {
+  document
+    .querySelectorAll(".tab-content")
+    .forEach((tab) => tab.classList.add("hidden"));
+  document
+    .querySelectorAll(".tab-button")
+    .forEach((btn) => btn.classList.remove("active"));
+  document.getElementById(tabName).classList.remove("hidden");
+  evt.currentTarget.classList.add("active");
+}
 
 function logout() {
   localStorage.removeItem("currentUser");
   window.location.href = "../../login/login.html";
 }
 
-// ======= ТОВАРЫ =======
-function loadProducts() {
-  const products = JSON.parse(localStorage.getItem("products")) || [];
-  const list = document.getElementById("productList");
-  list.innerHTML = "";
+// ===================== ТОВАРЫ =====================
 
-  products.forEach((product, index) => {
-    const item = document.createElement("div");
-    item.classList.add("product-item");
-    item.innerHTML = `
-      <strong>${product.name}</strong> — ${product.brand}, ${product.price} ₽, ${product.stock} шт.
-      <button onclick="editProduct(${index})">Редактировать</button>
-    `;
-    list.appendChild(item);
-  });
+function loadProducts() {
+  fetch(`${API_URL}/part/getAll`)
+    .then((res) => res.json())
+    .then((products) => {
+      const list = document.getElementById("productList");
+      list.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Артикул</th>
+              <th>Название</th>
+              <th>Цена</th>
+              <th>Количество</th>
+              <th>Поставщик</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${products
+              .map(
+                (p) => `
+              <tr>
+                <td>${p.id}</td> <!-- Отображение Id товара -->
+                <td>${p.article}</td>
+                <td>${p.name}</td>
+                <td>${p.price} ₽</td>
+                <td>${p.quantity}</td>
+                <td>${p.supplierName || ""}</td>
+                <td>
+                  <button onclick='editProduct(${JSON.stringify(p)})'>✏</button>
+                  <button onclick='deleteProduct(${p.id})'>🗑</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+    });
 }
 
 function saveProduct(event) {
   event.preventDefault();
+  const id = document.getElementById("editProductId").value;
+  const article = parseInt(document.getElementById("productArticle").value);
   const name = document.getElementById("productName").value;
-  const brand = document.getElementById("productBrand").value;
   const price = parseFloat(document.getElementById("productPrice").value);
-  const stock = parseInt(document.getElementById("productStock").value);
-  const index = document.getElementById("editIndex").value;
+  const quantity = parseInt(document.getElementById("productQuantity").value);
+  const supplierId = parseInt(document.getElementById("productSupplier").value);
 
-  let products = JSON.parse(localStorage.getItem("products")) || [];
+  const product = { id, article, name, price, quantity, supplierId };
+  const method = id ? "PUT" : "POST";
+  const url = id ? `${API_URL}/part/update` : `${API_URL}/part/add`;
 
-  if (index) {
-    products[index] = { name, brand, price, stock };
-  } else {
-    products.push({ name, brand, price, stock });
-  }
-
-  localStorage.setItem("products", JSON.stringify(products));
-  loadProducts();
-  document.getElementById("productForm").style.display = "none";
+  fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(product),
+  })
+    .then((res) => res.json())
+    .then(() => {
+      loadProducts();
+      closeProductForm();
+    });
 }
 
-function editProduct(index) {
-  const products = JSON.parse(localStorage.getItem("products")) || [];
-  const product = products[index];
-
-  document.getElementById("productName").value = product.name;
-  document.getElementById("productBrand").value = product.brand;
-  document.getElementById("productPrice").value = product.price;
-  document.getElementById("productStock").value = product.stock;
-  document.getElementById("editIndex").value = index;
-  document.getElementById("productForm").style.display = "block";
+function editProduct(p) {
+  document.getElementById("editProductId").value = p.id;
+  document.getElementById("productArticle").value = p.article;
+  document.getElementById("productName").value = p.name;
+  document.getElementById("productPrice").value = p.price;
+  document.getElementById("productQuantity").value = p.quantity;
+  document.getElementById("productSupplier").value = p.supplierId;
+  document.getElementById("addProductForm").style.display = "flex";
 }
 
-function deleteSelectedProduct() {
-  const index = document.getElementById("editIndex").value;
-  if (index === "") return;
-
-  let products = JSON.parse(localStorage.getItem("products")) || [];
-  products.splice(index, 1);
-  localStorage.setItem("products", JSON.stringify(products));
-  loadProducts();
-  document.getElementById("productForm").style.display = "none";
+function deleteProduct(id) {
+  fetch(`${API_URL}/part/delete/${id}`, { method: "DELETE" }).then(() =>
+    loadProducts()
+  );
 }
 
-// ======= ПОСТАВЩИКИ =======
+function closeProductForm() {
+  document.getElementById("addProductForm").style.display = "none";
+}
+
+// ===================== ПОСТАВЩИКИ =====================
+
 function loadSuppliers() {
-  const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
-  const list = document.getElementById("supplierList");
-  list.innerHTML = "";
+  fetch(`${API_URL}/supplier/getAll`)
+    .then((res) => res.json())
+    .then((suppliers) => {
+      const select = document.getElementById("productSupplier");
+      if (select) {
+        select.innerHTML = suppliers
+          .map((s) => `<option value="${s.id}">${s.name}</option>`)
+          .join("");
+      }
+    });
+}
 
-  suppliers.forEach((supplier, index) => {
-    const item = document.createElement("div");
-    item.classList.add("supplier-item");
-    item.innerHTML = `
-      <strong>${supplier.name}</strong> — ${supplier.contact}
-      <button onclick="editSupplier(${index})">Редактировать</button>
-    `;
-    list.appendChild(item);
-  });
+function loadSupplierList() {
+  fetch(`${API_URL}/supplier/getAll`)
+    .then((res) => res.json())
+    .then((suppliers) => {
+      const list = document.getElementById("supplierList");
+      list.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Название</th>
+              <th>Email</th>
+              <th>Телефон</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${suppliers
+              .map(
+                (s) => `
+              <tr>
+                <td>${s.name}</td>
+                <td>${s.email}</td>
+                <td>${s.phone}</td>
+                <td>
+                  <button onclick='editSupplier(${JSON.stringify(
+                    s
+                  )})'>✏</button>
+                  <button onclick='deleteSupplier(${s.id})'>🗑</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+    });
 }
 
 function saveSupplier(event) {
   event.preventDefault();
+  const id = document.getElementById("editSupplierId").value;
   const name = document.getElementById("supplierName").value;
-  const contact = document.getElementById("supplierContact").value;
-  const index = document.getElementById("editSupplierIndex").value;
+  const email = document.getElementById("supplierEmail").value;
+  const phone = document.getElementById("supplierPhone").value;
 
-  let suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
+  const supplier = { id, name, email, phone };
+  const method = id ? "PUT" : "POST";
+  const url = id ? `${API_URL}/supplier/update` : `${API_URL}/supplier/add`;
 
-  if (index) {
-    suppliers[index] = { name, contact };
-  } else {
-    suppliers.push({ name, contact });
-  }
-
-  localStorage.setItem("suppliers", JSON.stringify(suppliers));
-  loadSuppliers();
-  document.getElementById("supplierForm").style.display = "none";
+  fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(supplier),
+  })
+    .then((res) => res.json())
+    .then(() => {
+      loadSupplierList();
+      loadSuppliers();
+      closeSupplierForm();
+    });
 }
 
-function editSupplier(index) {
-  const suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
-  const supplier = suppliers[index];
-
-  document.getElementById("supplierName").value = supplier.name;
-  document.getElementById("supplierContact").value = supplier.contact;
-  document.getElementById("editSupplierIndex").value = index;
-  document.getElementById("supplierForm").style.display = "block";
+function editSupplier(s) {
+  document.getElementById("editSupplierId").value = s.id;
+  document.getElementById("supplierName").value = s.name;
+  document.getElementById("supplierEmail").value = s.email;
+  document.getElementById("supplierPhone").value = s.phone;
+  document.getElementById("addSupplierForm").style.display = "flex";
 }
 
-function deleteSelectedSupplier() {
-  const index = document.getElementById("editSupplierIndex").value;
-  if (index === "") return;
-
-  let suppliers = JSON.parse(localStorage.getItem("suppliers")) || [];
-  suppliers.splice(index, 1);
-  localStorage.setItem("suppliers", JSON.stringify(suppliers));
-  loadSuppliers();
-  document.getElementById("supplierForm").style.display = "none";
+function deleteSupplier(id) {
+  fetch(`${API_URL}/supplier/delete/${id}`, { method: "DELETE" }).then(() => {
+    loadSupplierList();
+    loadSuppliers();
+  });
 }
 
-// ======= ЗАКАЗЫ =======
+function closeSupplierForm() {
+  document.getElementById("addSupplierForm").style.display = "none";
+}
+
+// ===================== ЗАКАЗЫ =====================
+
 function loadOrders() {
   const orders = JSON.parse(localStorage.getItem("orders")) || [];
   const list = document.getElementById("orderList");
