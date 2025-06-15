@@ -98,7 +98,7 @@ function loadProducts() {
                 <td>${p.name}</td>
                 <td>${p.price} ₽</td>
                 <td>${p.quantity}</td>
-                <td>${p.supplierName || ""}</td>
+                <td>${p.supplierId || ""}</td>
                 <td>
                   <button onclick='editProduct(${JSON.stringify(p)})'>✏</button>
                   <button onclick='deleteProduct(${p.id})'>🗑</button>

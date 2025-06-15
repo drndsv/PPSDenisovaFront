@@ -20,7 +20,6 @@ function renderOrderItems() {
     div.innerHTML = `
       <div>
         <strong>${item.name}</strong>
-        <p>Бренд: ${item.brand}</p>
         <p>Цена: ${item.price} ₽</p>
       </div>
     `;

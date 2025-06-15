@@ -24,7 +24,6 @@ function renderCart() {
           <input type="checkbox" onchange="toggleSelection(${index})" />
           <strong>${item.name}</strong>
         </label>
-        <p>Бренд: ${item.brand}</p>
         <p>Цена: ${item.price} ₽</p>
       </div>
       <button onclick="removeFromCart(${index})">Удалить</button>
