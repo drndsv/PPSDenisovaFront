@@ -1,8 +1,9 @@
+let currentEditOrder = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   const user = JSON.parse(localStorage.getItem("currentUser"));
-
   if (!user || user.role !== "customer") {
-    window.location.href = "login.html";
+    window.location.href = "../../login/login.html";
     return;
   }
 
@@ -10,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("userEmail").textContent = user.email;
   document.getElementById("userPhone").textContent = user.phone;
 
-  loadOrderHistory(user.email);
+  loadOrderHistory(user.id); // Используем user.id для поиска заказов
 });
 
 function logout() {
@@ -22,10 +23,13 @@ function goBack() {
   window.location.href = "../catalog/catalog.html";
 }
 
-function loadOrderHistory(userEmail) {
-  const allOrders = JSON.parse(localStorage.getItem("orders")) || [];
-  const userOrders = allOrders.filter((order) => order.email === userEmail);
+async function loadOrderHistory(userId) {
+  const response = await fetch(
+    `http://localhost:8080/application_order/getByUserId/${userId}`
+  );
+  const allOrders = await response.json();
 
+  const userOrders = allOrders.filter((order) => order.userId === userId);
   const container = document.getElementById("orderHistory");
   container.innerHTML = "";
 
@@ -34,154 +38,140 @@ function loadOrderHistory(userEmail) {
     return;
   }
 
-  userOrders.forEach((order, index) => {
-    const total = order.items.reduce((sum, item) => sum + item.price, 0);
-
+  userOrders.forEach((order) => {
+    const total = order.totalAmount; // Используем totalAmount для общей стоимости
     const div = document.createElement("div");
     div.className = "order-item";
     div.innerHTML = `
-      <p><strong>Дата:</strong> ${order.date}</p>
+      <p><strong>Дата:</strong> ${order.createdAt}</p>
       <p><strong>Получатель:</strong> ${order.receiver}</p>
       <p><strong>Адрес:</strong> ${order.address}</p>
-      <p><strong>Товары:</strong> ${order.items
-        .map((item) => item.name)
-        .join(", ")}</p>
       <p><strong>Стоимость:</strong> ${total} ₽</p>
-      <button class="edit-btn" data-index="${index}">Изменить заказ</button>
+      <button onclick='openEditModal(${JSON.stringify(
+        order
+      )})'>Изменить заказ</button>
     `;
     container.appendChild(div);
   });
-
-  document.querySelectorAll(".edit-btn").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      const index = parseInt(e.target.dataset.index);
-      openEditModal(index);
-    });
-  });
 }
 
-function openEditModal(orderIndex) {
-  const allOrders = JSON.parse(localStorage.getItem("orders")) || [];
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-  const userOrders = allOrders.filter((order) => order.email === user.email);
-  const order = userOrders[orderIndex];
-
+async function openEditModal(order) {
   currentEditOrder = order;
-
   document.getElementById("editReceiver").value = order.receiver;
   document.getElementById("editAddress").value = order.address;
   document.getElementById("editOrderModal").style.display = "flex";
 
-  const orderItemsTable = document.getElementById("orderItemsTable");
-  orderItemsTable.innerHTML = ""; // Очистка таблицы
+  // Загружаем товары для этого заказа, только если их еще нет
+  if (!currentEditOrder.items) {
+    const response = await fetch(
+      `http://localhost:8080/orderItem/getById/${order.id}`
+    );
+    const orderItems = await response.json();
+    currentEditOrder.items = orderItems;
+  }
 
-  order.items.forEach((item, index) => {
+  renderOrderItems(); // рисуем таблицу товаров
+
+  const form = document.getElementById("editOrderForm");
+  form.onsubmit = async function (e) {
+    e.preventDefault();
+    currentEditOrder.receiver = document
+      .getElementById("editReceiver")
+      .value.trim();
+    currentEditOrder.address = document
+      .getElementById("editAddress")
+      .value.trim();
+    currentEditOrder.status = "pending";
+
+    // Сохраняем изменения заказа
+    await fetch("http://localhost:8080/application_order/update", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(currentEditOrder),
+    });
+
+    closeEditModal();
+    loadOrderHistory(currentEditOrder.userId); // Обновление заказов
+  };
+}
+
+function renderOrderItems() {
+  const table = document.getElementById("orderItemsTable");
+  table.innerHTML = "";
+
+  if (!currentEditOrder.items || currentEditOrder.items.length === 0) {
+    const row = document.createElement("tr");
+    row.innerHTML = "<td colspan='3'>Нет товаров в заказе</td>";
+    table.appendChild(row);
+    return;
+  }
+
+  currentEditOrder.items.forEach((item, index) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${item.name}</td>
       <td>${item.price} ₽</td>
-      <td><button type="button" onclick="removeItem(${orderIndex}, ${index})">Удалить</button></td>
+      <td><button type="button" onclick="removeItem(${index})">Удалить</button></td>
     `;
-    orderItemsTable.appendChild(row);
+    table.appendChild(row);
   });
+}
 
-  const form = document.getElementById("editOrderForm");
-  form.onsubmit = function (e) {
-    e.preventDefault();
+function removeItem(index) {
+  if (!currentEditOrder || !currentEditOrder.items) return;
 
-    order.receiver = document.getElementById("editReceiver").value.trim();
-    order.address = document.getElementById("editAddress").value.trim();
-
-    // Отправляем заказ на подтверждение модератору
-    order.status = "pending";
-
-    // Обновляем заказ в allOrders
-    const indexInAll = allOrders.findIndex(
-      (o) => o.date === order.date && o.email === order.email
-    );
-    if (indexInAll !== -1) {
-      allOrders[indexInAll] = order;
-      localStorage.setItem("orders", JSON.stringify(allOrders));
-    }
-
-    closeEditModal();
-    loadOrderHistory(user.email);
-  };
+  currentEditOrder.items.splice(index, 1);
+  renderOrderItems(); // обновляем таблицу
 }
 
 function closeEditModal() {
   document.getElementById("editOrderModal").style.display = "none";
 }
 
-function removeItem(orderIndex, itemIndex) {
-  const allOrders = JSON.parse(localStorage.getItem("orders")) || [];
-  const user = JSON.parse(localStorage.getItem("currentUser"));
-  const userOrders = allOrders.filter((order) => order.email === user.email);
-  const order = userOrders[orderIndex];
+async function openCatalog() {
+  try {
+    const response = await fetch("http://localhost:8080/part/getAll");
+    if (!response.ok) throw new Error("Ошибка при загрузке каталога");
+    const catalogItems = await response.json();
 
-  // Удаляем товар из заказа
-  order.items.splice(itemIndex, 1);
+    const catalogList = document.getElementById("catalogItemsList");
+    catalogList.innerHTML = "";
 
-  // Обновляем заказ в allOrders
-  const indexInAll = allOrders.findIndex(
-    (o) => o.date === order.date && o.email === order.email
-  );
-  if (indexInAll !== -1) {
-    allOrders[indexInAll] = order;
-    localStorage.setItem("orders", JSON.stringify(allOrders));
+    catalogItems.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <p>${item.name} - ${item.price} ₽</p>
+        <button type="button" data-item='${JSON.stringify(item).replace(
+          /'/g,
+          "&apos;"
+        )}' onclick="addItemFromButton(this)">Добавить в заказ</button>
+      `;
+      catalogList.appendChild(div);
+    });
+
+    document.getElementById("catalogModal").style.display = "flex";
+  } catch (error) {
+    console.error("Ошибка загрузки товаров:", error);
   }
-
-  // Перезагружаем историю заказов
-  loadOrderHistory(user.email);
 }
 
-function openCatalog() {
-  const catalogItems = JSON.parse(localStorage.getItem("products")) || [];
-  const catalogList = document.getElementById("catalogItemsList");
-  catalogList.innerHTML = "";
-
-  catalogItems.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <p>${item.name} - ${item.price} ₽</p>
-      <button type="button" onclick="addItemToOrder(${index})">Добавить в заказ</button>
-    `;
-    catalogList.appendChild(div);
-  });
-
-  document.getElementById("catalogModal").style.display = "flex";
+function addItemFromButton(button) {
+  const itemJson = button.getAttribute("data-item").replace(/&apos;/g, "'");
+  const item = JSON.parse(itemJson);
+  addItemToOrder(item);
 }
 
-function addItemToOrder(itemIndex) {
-  const allOrders = JSON.parse(localStorage.getItem("orders")) || [];
-  const catalogItems = JSON.parse(localStorage.getItem("products")) || [];
-  const selectedItem = catalogItems[itemIndex];
-
-  if (!currentEditOrder || !selectedItem) {
-    console.error("Invalid order or product");
-    return;
-  }
+function addItemToOrder(item) {
+  if (!currentEditOrder || !item) return;
 
   if (!currentEditOrder.items) {
     currentEditOrder.items = [];
   }
 
-  currentEditOrder.items.push(selectedItem);
-  currentEditOrder.status = "pending"; // помечаем заказ как изменённый
+  currentEditOrder.items.push(item);
+  currentEditOrder.status = "pending";
 
-  // Обновляем заказ в allOrders
-  const indexInAll = allOrders.findIndex(
-    (o) =>
-      o.date === currentEditOrder.date && o.email === currentEditOrder.email
-  );
-
-  if (indexInAll !== -1) {
-    allOrders[indexInAll] = currentEditOrder;
-    localStorage.setItem("orders", JSON.stringify(allOrders));
-  }
-
-  closeCatalogModal();
-  openEditModal(indexInAll); // обновим модальное окно
+  renderOrderItems(); // перерисовываем таблицу
 }
 
 function closeCatalogModal() {

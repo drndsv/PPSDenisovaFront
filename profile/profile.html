@@ -6,56 +6,58 @@
     <link rel="stylesheet" href="profile.css" />
   </head>
   <body>
-    <div class="container">
-      <h2>Личный кабинет</h2>
-
-      <div class="profile-info">
-        <p><strong>ФИО:</strong> <span id="userName"></span></p>
-        <p><strong>Email:</strong> <span id="userEmail"></span></p>
-        <p><strong>Телефон:</strong> <span id="userPhone"></span></p>
-      </div>
-
-      <h3>История заказов</h3>
-      <div id="orderHistory" class="order-history">
-        <!-- заказы появятся здесь -->
-      </div>
-
-      <button onclick="goBack()">Назад в каталог</button>
+    <header>
+      <h1>Личный кабинет</h1>
       <button onclick="logout()">Выйти</button>
-    </div>
+    </header>
 
-    <!-- Модальное окно для редактирования заказа -->
+    <section class="user-info">
+      <p><strong>ФИО:</strong> <span id="userName"></span></p>
+      <p><strong>Email:</strong> <span id="userEmail"></span></p>
+      <p><strong>Телефон:</strong> <span id="userPhone"></span></p>
+      <button onclick="goBack()">Назад к каталогу</button>
+    </section>
+
+    <section class="order-history">
+      <h2>Мои заказы</h2>
+      <div id="orderHistory"></div>
+    </section>
+
+    <!-- Модальное окно редактирования заказа -->
     <div id="editOrderModal" class="modal">
       <div class="modal-content">
-        <h3>Изменить заказ</h3>
         <form id="editOrderForm">
-          <label for="editReceiver">Получатель:</label>
-          <input type="text" id="editReceiver" required />
-          <label for="editAddress">Адрес:</label>
-          <input type="text" id="editAddress" required />
-
-          <h4>Товары в заказе</h4>
-          <table id="orderItemsTable">
-            <!-- товары появятся здесь -->
+          <label
+            >Получатель:
+            <input type="text" id="editReceiver" required />
+          </label>
+          <label
+            >Адрес:
+            <input type="text" id="editAddress" required />
+          </label>
+          <table>
+            <thead>
+              <tr>
+                <th>Название</th>
+                <th>Цена</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="orderItemsTable"></tbody>
           </table>
-
-          <button type="button" onclick="openCatalog()">
-            Добавить товар из каталога
-          </button>
+          <button type="button" onclick="openCatalog()">Добавить товар</button>
           <button type="submit">Сохранить изменения</button>
-          <button type="button" onclick="closeEditModal()">Закрыть</button>
+          <button type="button" onclick="closeEditModal()">Отмена</button>
         </form>
       </div>
     </div>
 
-    <!-- Модальное окно для выбора товара из каталога -->
+    <!-- Модальное окно каталога -->
     <div id="catalogModal" class="modal">
       <div class="modal-content">
-        <h3>Выберите товар из каталога</h3>
-        <div id="catalogItemsList">
-          <!-- список товаров появится здесь -->
-        </div>
-        <button type="button" onclick="closeCatalogModal()">Закрыть</button>
+        <h3>Каталог товаров</h3>
+        <div id="catalogItemsList"></div>
+        <button onclick="closeCatalogModal()">Закрыть</button>
       </div>
     </div>
 

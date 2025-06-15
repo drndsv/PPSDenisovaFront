@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadSuppliers(); // для селекта
   loadProducts(); // для таблицы
   loadSupplierList(); // таблица поставщиков
-  loadOrders(); // локальные заказы
+  loadOrders(); // загрузка заказов
 });
 
 function openTab(evt, tabName) {
@@ -258,36 +258,56 @@ function closeSupplierForm() {
 // ===================== ЗАКАЗЫ =====================
 
 function loadOrders() {
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  const list = document.getElementById("orderList");
-  list.innerHTML = "";
-
-  orders.forEach((order, index) => {
-    const item = document.createElement("div");
-    item.classList.add("order-item");
-    item.innerHTML = `
-      <p><strong>Заказ от:</strong> ${order.customerName}</p>
-      <p><strong>Товары:</strong> ${order.products
-        .map((p) => p.name)
-        .join(", ")}</p>
-      <p><strong>Статус:</strong> ${order.status}</p>
-      <button onclick="confirmOrder(${index})">Подтвердить</button>
-      <button onclick="rejectOrder(${index})">Отклонить</button>
-    `;
-    list.appendChild(item);
-  });
+  fetch(`${API_URL}/application_order/getAll`)
+    .then((res) => res.json())
+    .then((orders) => {
+      const list = document.getElementById("orderList");
+      list.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Покупатель</th>
+              <th>Сумма заказа</th>
+              <th>Адрес</th>
+              <th>Статус</th>
+              <th>Дата создания</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${orders
+              .map(
+                (o) => `
+              <tr>
+                <td>${o.id}</td>
+                <td>${o.receiver}</td>
+                <td>${o.totalAmount} ₽</td>
+                <td>${o.address}</td>
+                <td>${o.statusId}</td>
+                <td>${new Date(o.createdAt).toLocaleString()}</td>
+                <td>
+                  <button onclick='confirmOrder(${o.id})'>Подтвердить</button>
+                  <button onclick='rejectOrder(${o.id})'>Отклонить</button>
+                </td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `;
+    });
 }
 
-function confirmOrder(index) {
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  orders[index].status = "Подтвержден";
-  localStorage.setItem("orders", JSON.stringify(orders));
-  loadOrders();
+function confirmOrder(id) {
+  fetch(`${API_URL}/order/confirm/${id}`, { method: "PATCH" }).then(() =>
+    loadOrders()
+  );
 }
 
-function rejectOrder(index) {
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  orders[index].status = "Отклонен";
-  localStorage.setItem("orders", JSON.stringify(orders));
-  loadOrders();
+function rejectOrder(id) {
+  fetch(`${API_URL}/order/reject/${id}`, { method: "PATCH" }).then(() =>
+    loadOrders()
+  );
 }

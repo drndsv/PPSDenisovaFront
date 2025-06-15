@@ -32,7 +32,7 @@ function renderOrderItems() {
   orderItemsContainer.appendChild(totalBlock);
 }
 
-form.addEventListener("submit", function (e) {
+form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
   const recipient = document.getElementById("recipient").value.trim();
@@ -48,30 +48,62 @@ form.addEventListener("submit", function (e) {
     return;
   }
 
-  // Формируем объект заказа
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.price, 0);
+
   const newOrder = {
-    email: currentUser.email,
-    receiver: recipient,
-    address: address,
-    date: new Date().toLocaleDateString("ru-RU"),
-    items: orderItems.map((item) => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-    })),
+    userId: currentUser.id,
+    totalAmount: totalAmount,
+    statusId: 1,
+    createdAt: new Date().toISOString(),
   };
 
-  // Сохраняем заказ
-  const orders = JSON.parse(localStorage.getItem("orders")) || [];
-  orders.push(newOrder);
-  localStorage.setItem("orders", JSON.stringify(orders));
+  try {
+    const response = await fetch(
+      "http://localhost:8080/application_order/add",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newOrder),
+      }
+    );
 
-  // Очистим корзину
-  localStorage.removeItem("cart");
-  localStorage.removeItem("checkoutItems");
+    if (!response.ok) {
+      throw new Error("Ошибка при создании заказа");
+    }
 
-  // Перенаправление на страницу успешного оформления
-  window.location.href = "order-success.html";
+    const savedOrder = await response.json();
+
+    for (const item of orderItems) {
+      const orderItem = {
+        orderId: savedOrder.id,
+        partId: item.id, // <- обязательно чтобы в item был id детали
+        quantity: 1, // или взять из item.quantity, если нужно
+        price: item.price,
+      };
+
+      const itemResponse = await fetch("http://localhost:8080/orderItem/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(orderItem),
+      });
+
+      if (!itemResponse.ok) {
+        throw new Error("Ошибка при добавлении товара в заказ");
+      }
+    }
+
+    localStorage.removeItem("cart");
+    localStorage.removeItem("checkoutItems");
+
+    window.location.href = "order-success.html";
+  } catch (error) {
+    console.error("Ошибка при оформлении заказа:", error);
+    alert("Произошла ошибка при оформлении заказа");
+  }
 });
 
 renderOrderItems();
