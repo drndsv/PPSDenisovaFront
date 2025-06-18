@@ -49,12 +49,16 @@ form.addEventListener("submit", async function (e) {
   }
 
   const totalAmount = orderItems.reduce((sum, item) => sum + item.price, 0);
+  const now = new Date();
+  const formattedDate = now.toISOString().split(".")[0];
 
   const newOrder = {
     userId: currentUser.id,
+    receiver: recipient,
+    address: address,
     totalAmount: totalAmount,
     statusId: 1,
-    createdAt: new Date().toISOString(),
+    createdAt: formattedDate,
   };
 
   try {
@@ -78,8 +82,8 @@ form.addEventListener("submit", async function (e) {
     for (const item of orderItems) {
       const orderItem = {
         orderId: savedOrder.id,
-        partId: item.id, // <- обязательно чтобы в item был id детали
-        quantity: 1, // или взять из item.quantity, если нужно
+        partId: item.id,
+        quantity: 1,
         price: item.price,
       };
 
@@ -98,7 +102,6 @@ form.addEventListener("submit", async function (e) {
 
     localStorage.removeItem("cart");
     localStorage.removeItem("checkoutItems");
-
     window.location.href = "order-success.html";
   } catch (error) {
     console.error("Ошибка при оформлении заказа:", error);
